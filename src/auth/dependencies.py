@@ -5,8 +5,8 @@ from fastapi import HTTPException
 from jwt import PyJWTError
 from pydantic import ValidationError
 
+from config.config import settings
 from src.auth.schemas import TokenPayload
-from src.config import settings
 from src.users.models import User
 
 

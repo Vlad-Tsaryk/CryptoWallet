@@ -3,7 +3,7 @@ from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy_file import ImageField
 
-from src.database import Base
+from config.database import Base
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -19,6 +19,11 @@ class User(Base):
     _password: Mapped[str]
     is_active: Mapped[bool] = mapped_column(default=True)
     is_superuser: Mapped[bool] = mapped_column(default=False)
+
+    # wallets = relationship("wallet", lazy="dynamic")  # lazy-loading relationship
+    # wallets: Mapped[List["Wallet"]] = relationship(
+    #     back_populates="user", cascade="all, delete-orphan"
+    # )
 
     @property
     def password(self):

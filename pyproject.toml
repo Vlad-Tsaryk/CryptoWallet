@@ -4,7 +4,6 @@ version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-packages = [{include = "api_gateway"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -26,6 +25,7 @@ pillow = "^9.5.0"
 loguru = "^0.7.0"
 sqlalchemy-file = "^0.4.0"
 fasteners = "^0.18"
+propan = {extras = ["async-rabbit"], version = "^0.1.2.14"}
 
 
 

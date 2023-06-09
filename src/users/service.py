@@ -4,7 +4,7 @@ from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config import email_conf
+from config.config import email_conf
 from src.users.models import User
 from src.users.schemas import UserRegistration, UserUpdate
 

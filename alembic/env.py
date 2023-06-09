@@ -19,7 +19,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from src.database import Base
+from config.database import Base
 
 target_metadata = Base.metadata
 
@@ -27,7 +27,7 @@ target_metadata = Base.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-from src.config import settings
+from config.config import settings
 
 config.set_main_option("sqlalchemy.url", settings.POSTGRES_URI)
 

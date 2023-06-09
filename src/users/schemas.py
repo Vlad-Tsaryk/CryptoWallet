@@ -84,20 +84,9 @@ class UserUpdate(UserRegistration):
     password: str | None = Field(min_length=8, max_length=20, default=None)
     password_repeat: str | None
 
-    # @validator('profile_image')
-    # def check_image(cls, image):
-    #     if image:
-    #         try:
-    #             img = Image.open(image.file)
-    #             logger.info(img.verify())
-    #         except IOError:
-    #             raise ValueError('File is not image')
-    #         img.close()
-    #     return image
-
 
 class UserResponse(UserBase):
-    # id: int
+    id: int
     email: Optional[EmailStr] = None
 
     class Config:

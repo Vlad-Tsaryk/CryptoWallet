@@ -4,16 +4,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from config.config import settings
-from .users.endpoints import user_router as user_router
-from .wallet.router import router as wallet_router
+from config_fastapi.urls import register_routers
 
 
 def create_application() -> FastAPI:
-    application = FastAPI(
-        title=settings.PROJECT_NAME, lifespan=wallet_router.lifespan_context
-    )
-    application.include_router(user_router)
-    application.include_router(wallet_router)
+    application = FastAPI(title=settings.PROJECT_NAME)
+    register_routers(application)
     return application
 
 
