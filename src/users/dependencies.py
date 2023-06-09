@@ -2,8 +2,8 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config.database import get_session
 from src.auth.dependencies import get_token_data
+from src.dependencies import get_session
 from src.users.models import User
 from src.users.schemas import UserRegistration
 from .service import get_user_by_email

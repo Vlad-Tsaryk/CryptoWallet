@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Form, UploadFile, HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config.database import get_session
+from src.dependencies import get_session
 from src.users import service as user_service
 from src.users.dependencies import get_current_user
 from src.users.models import User

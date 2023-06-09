@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config.database import get_session
+from src.dependencies import get_session
 from src.users import service as user_service
 from src.users.schemas import UserLogin, UserRegistration
 from .dependencies import create_access_token
