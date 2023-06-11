@@ -88,6 +88,7 @@ class UserUpdate(UserRegistration):
 class UserResponse(UserBase):
     id: int
     email: Optional[EmailStr] = None
+    # wallets: WalletResponse | None = None
 
     class Config:
         orm_mode = True

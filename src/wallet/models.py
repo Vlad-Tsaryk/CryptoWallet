@@ -1,5 +1,5 @@
 from sqlalchemy import String, ForeignKey, UniqueConstraint, SmallInteger
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from config.database import Base
 
@@ -14,7 +14,7 @@ class Wallet(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     currency_id: Mapped[int] = mapped_column(ForeignKey("currency.id"))
 
-    # user = relationship("user")
+    owner = relationship("User", back_populates="wallets")
     # currency: Mapped["Currency"] = relationship(back_populates="wallets")
 
 

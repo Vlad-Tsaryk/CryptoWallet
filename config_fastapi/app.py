@@ -4,11 +4,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from config.config import settings
+from config_fastapi.broker import router
 from config_fastapi.urls import register_routers
 
 
 def create_application() -> FastAPI:
-    application = FastAPI(title=settings.PROJECT_NAME)
+    application = FastAPI(title=settings.PROJECT_NAME, lifespan=router.lifespan_context)
     register_routers(application)
     return application
 
@@ -16,7 +17,6 @@ def create_application() -> FastAPI:
 app = create_application()
 
 
-# app = FastAPI()
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     content = jsonable_encoder({"detail": exc.errors(), "body": exc.body})

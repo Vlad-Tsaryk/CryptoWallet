@@ -26,6 +26,7 @@ loguru = "^0.7.0"
 sqlalchemy-file = "^0.4.0"
 fasteners = "^0.18"
 propan = {extras = ["async-rabbit"], version = "^0.1.2.14"}
+web3 = "^6.4.0"
 
 
 

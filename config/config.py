@@ -27,6 +27,8 @@ class Settings(BaseSettings):
             db=values.get("POSTGRES_DB"),
         )
 
+    RABBITMQ_URL: str
+
     SECRET_KEY: SecretStr
     JWT_ALGORITHM: str
 

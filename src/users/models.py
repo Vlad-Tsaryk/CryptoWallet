@@ -1,6 +1,8 @@
+from typing import List
+
 from passlib.context import CryptContext
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy_file import ImageField
 
 from config.database import Base
@@ -19,7 +21,12 @@ class User(Base):
     _password: Mapped[str]
     is_active: Mapped[bool] = mapped_column(default=True)
     is_superuser: Mapped[bool] = mapped_column(default=False)
-
+    wallets: Mapped[List["Wallet"]] = relationship(
+        "Wallet",
+        back_populates="owner",
+        cascade="all,delete-orphan",
+        uselist=True,
+    )
     # wallets = relationship("wallet", lazy="dynamic")  # lazy-loading relationship
     # wallets: Mapped[List["Wallet"]] = relationship(
     #     back_populates="user", cascade="all, delete-orphan"

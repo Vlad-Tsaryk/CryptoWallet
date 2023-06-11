@@ -43,3 +43,13 @@ async def profile_update(
         raise HTTPException(status_code=400, detail=e.errors())
 
     return await user_service.update_user(user, current_user, session)
+
+
+# @profile_router.get("/profile/create-wallet/")
+# async def create_wallet(
+#     broker: Annotated[RabbitBroker, Depends(get_broker)],
+#     current_user: User = Depends(get_current_user),
+# ):
+#     await broker.publish(current_user, "wallet.create")
+#     logger.success(f"Address: {address}")
+#     return address
