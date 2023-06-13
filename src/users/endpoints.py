@@ -4,21 +4,21 @@ from fastapi import APIRouter, Depends, Form, UploadFile, HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.dependencies import get_current_user
 from src.dependencies import get_session
 from src.users import service as user_service
-from src.users.dependencies import get_current_user
 from src.users.models import User
 from src.users.schemas import UserResponse, UserUpdate
 
 profile_router = APIRouter()
 
 
-@profile_router.get("/profile/", response_model=UserResponse)
+@profile_router.get("/", response_model=UserResponse)
 async def profile(user: User = Depends(get_current_user)):
     return user
 
 
-@profile_router.put("/profile/", response_model=UserResponse)
+@profile_router.put("/", response_model=UserResponse)
 async def profile_update(
     username: Annotated[str, Form()],
     first_name: Annotated[str, Form()],

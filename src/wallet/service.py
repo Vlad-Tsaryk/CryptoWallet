@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from src.wallet.models import Wallet
 from src.wallet.schemas import WalletCreate, WalletAddress
@@ -34,3 +35,13 @@ async def get_wallet_by_address(
 ) -> Wallet | None:
     result = await session.execute(select(Wallet).where(Wallet.address == address))
     return result.scalar_one_or_none()
+
+
+async def get_all_user_wallets(user_id: int, session: AsyncSession):
+    smtp = (
+        select(Wallet)
+        .where(Wallet.user_id == user_id)
+        .options(joinedload(Wallet.currency))
+    )
+    result = await session.scalars(smtp)
+    return result.all()

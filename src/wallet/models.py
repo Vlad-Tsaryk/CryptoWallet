@@ -1,3 +1,5 @@
+from typing import List
+
 from sqlalchemy import String, ForeignKey, UniqueConstraint, SmallInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,7 +17,9 @@ class Wallet(Base):
     currency_id: Mapped[int] = mapped_column(ForeignKey("currency.id"))
 
     owner = relationship("User", back_populates="wallets")
-    # currency: Mapped["Currency"] = relationship(back_populates="wallets")
+    currency: Mapped["Currency"] = relationship(back_populates="wallets")
+    # currency = relationship("Currency")
+    # shipping_address = relationship("Address")
 
 
 class Currency(Base):
@@ -28,9 +32,10 @@ class Currency(Base):
     blockchain_id = mapped_column(ForeignKey("blockchain.id"))
 
     # blockchain: Mapped["Blockchain"] = relationship(back_populates="currencies")
-    # wallets: Mapped[List["Wallet"]] = relationship(
-    #     back_populates="wallet", cascade="all, delete-orphan"
-    # )
+    wallets: Mapped[List["Wallet"]] = relationship(
+        back_populates="currency", cascade="all, delete-orphan"
+    )
+    # wallets = relationship("Wallet")
 
 
 class Blockchain(Base):

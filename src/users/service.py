@@ -54,5 +54,4 @@ async def update_user(
     await session.commit()
     await session.refresh(current_user)
     logger.success(f"User id-{current_user.id} updated")
-
     return current_user

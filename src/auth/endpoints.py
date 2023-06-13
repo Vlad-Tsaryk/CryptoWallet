@@ -20,7 +20,7 @@ async def login(data: UserLogin, session: AsyncSession = Depends(get_session)):
     }
 
 
-@auth_router.post("/register", response_model=Token)
+@auth_router.post("/register/", response_model=Token)
 async def register_user(
     new_user: UserRegistration,
     background_tasks: BackgroundTasks,
