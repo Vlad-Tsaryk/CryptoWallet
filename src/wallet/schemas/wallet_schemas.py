@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from src.wallet.schemas.currency_schemas import CurrencyResponse
+
 
 class WalletBase(BaseModel):
     user_id: int
@@ -16,15 +18,6 @@ class WalletAddress(BaseModel):
 
 class WalletPrivateKey(BaseModel):
     private_key: str = Field(max_length=64)
-
-
-class CurrencyResponse(BaseModel):
-    name: str
-    image: str
-    decimal_places: int
-
-    class Config:
-        orm_mode = True
 
 
 class WalletResponse(WalletBase):

@@ -6,12 +6,17 @@ from fastapi import Depends, APIRouter
 from loguru import logger
 from propan import RabbitBroker
 from sqlalchemy.ext.asyncio import AsyncSession
+from web3 import AsyncWeb3
 
+from config.config import settings
 from src.dependencies import get_broker, get_session
 from src.dependencies import get_current_user
 from src.users.models import User
 from src.wallet import service as wallet_service
-from src.wallet.schemas import (
+from src.wallet.dependencies import is_user_wallet
+from src.wallet.http.balance import get_multiple_addresses_balance
+from src.wallet.schemas.transaction_schemas import TransactionCreate
+from src.wallet.schemas.wallet_schemas import (
     WalletCreate,
     WalletAddress,
     WalletPrivateKey,
@@ -65,8 +70,30 @@ async def wallet_list(
 ):
     wallets = await get_all_user_wallets(user_id=current_user.id, session=session)
     logger.info(wallets)
+    if wallets:
+        addresses = ",".join([wallet.address for wallet in wallets])
+        balances = await get_multiple_addresses_balance(addresses)
+        decimal_places = 10**18
+        for item in balances:
+            item["balance"] = int(item["balance"]) / decimal_places
+        logger.success(balances)
     return wallets
-    pass
+
+
+@wallet_router.post("/send-transaction/")
+async def send_transaction(
+    transaction: TransactionCreate, current_user: User = Depends(is_user_wallet)
+):
+    w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(settings.QUICK_NODE_URL))
+    await w3.eth.send_transaction(
+        {
+            "from": transaction.from_address,
+            "to": transaction.to_address,
+            "value": transaction.value,
+        }
+    )
+    logger.info(current_user)
+    return True
 
 
 # @wallet_router.event("wallet")

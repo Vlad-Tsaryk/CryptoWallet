@@ -1,7 +1,17 @@
+from datetime import datetime
 from typing import List
 
-from sqlalchemy import String, ForeignKey, UniqueConstraint, SmallInteger
+from sqlalchemy import (
+    String,
+    ForeignKey,
+    UniqueConstraint,
+    SmallInteger,
+    DateTime,
+    Float,
+)
+from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy_file import ImageField
 
 from config.database import Base
 
@@ -28,7 +38,7 @@ class Currency(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(254), index=True)
     decimal_places: Mapped[int] = mapped_column(SmallInteger)
-    image: Mapped[str] = mapped_column(String(100), unique=True)
+    image: Mapped[ImageField] = mapped_column(ImageField)
     blockchain_id = mapped_column(ForeignKey("blockchain.id"))
 
     # blockchain: Mapped["Blockchain"] = relationship(back_populates="currencies")
@@ -49,3 +59,19 @@ class Blockchain(Base):
     # currencies: Mapped[List["Currency"]] = relationship(
     #     back_populates="currency", cascade="all, delete-orphan"
     # )
+
+
+STATUS_CHOICES: ENUM = ENUM("SUCCESS", "FAILED", "PENDING", name="status_choices")
+
+
+class Transaction(Base):
+    __tablename__ = "transaction"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tnx_hash: Mapped[str] = mapped_column(String(64))
+    from_address: Mapped[str] = mapped_column(String(42), index=True)
+    to_address: Mapped[str] = mapped_column(String(42), index=True)
+    value: Mapped[float] = mapped_column(Float)
+    age: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
+    tnx_fee: Mapped[float] = mapped_column(Float)
+    status: Mapped[str] = mapped_column(String(10), STATUS_CHOICES, default="PENDING")

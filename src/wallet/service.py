@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src.wallet.models import Wallet
-from src.wallet.schemas import WalletCreate, WalletAddress
+from src.wallet.schemas.wallet_schemas import WalletCreate, WalletAddress
 
 
 async def create_wallet(wallet: WalletCreate, session: AsyncSession) -> Wallet:
@@ -35,6 +35,10 @@ async def get_wallet_by_address(
 ) -> Wallet | None:
     result = await session.execute(select(Wallet).where(Wallet.address == address))
     return result.scalar_one_or_none()
+
+
+async def get_wallet(wallet_id: int, session: AsyncSession) -> Wallet | None:
+    return await session.get(Wallet, wallet_id)
 
 
 async def get_all_user_wallets(user_id: int, session: AsyncSession):

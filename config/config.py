@@ -1,13 +1,17 @@
+import os
 from typing import Any, Dict, Optional
 
 from fastapi_mail import ConnectionConfig
-from libcloud.storage.drivers.local import LocalStorageDriver
+from libcloud.storage.providers import get_driver
+from libcloud.storage.types import Provider, ContainerAlreadyExistsError
 from pydantic import BaseSettings, SecretStr, validator, EmailStr
 from sqlalchemy_file.storage import StorageManager
 
 
 class Settings(BaseSettings):
     PROJECT_NAME: str
+
+    # POSTGRES_CONF
     POSTGRES_DB: str
     POSTGRES_HOST: str
     POSTGRES_USER: str
@@ -27,17 +31,29 @@ class Settings(BaseSettings):
             db=values.get("POSTGRES_DB"),
         )
 
+    # RABBITMQ_CONF
     RABBITMQ_URL: str
 
+    # JWT_CONF
     SECRET_KEY: SecretStr
     JWT_ALGORITHM: str
 
+    # MAILING_CONF
     MAIL_USERNAME: str
     MAIL_PASSWORD: str
     MAIL_FROM: EmailStr
     MAIL_PORT: int
     MAIL_SERVER: str
     MAIL_FROM_NAME: str
+
+    # CRYPTO_CONF
+    ETHERSCAN_API_KEY: str
+
+    # CELERY
+    CELERY_BROKER_URL: str
+    CELERY_RESULT_BACKEND: str
+
+    QUICK_NODE_URL: str
 
     class Config:
         env_file = ".env"
@@ -59,5 +75,19 @@ email_conf = ConnectionConfig(
 
 # Configure Storage
 # os.makedirs("/media/attachment", 0o777, exist_ok=True)
-container = LocalStorageDriver("media").get_container("attachment")
-StorageManager.add_storage("default", container)
+# container = LocalStorageDriver("media").get_container("attachment")
+# StorageManager.add_storage("default", container)
+os.makedirs("media", 0o777, exist_ok=True)
+driver = get_driver(Provider.LOCAL)("media")
+
+# cls = get_driver(Provider.MINIO)
+# driver = cls("minioadmin", "minioadmin", secure=False, host="127.0.0.1", port=9000)
+
+try:
+    driver.create_container(container_name="attachment")
+except ContainerAlreadyExistsError:
+    pass
+
+container = driver.get_container(container_name="attachment")
+
+StorageManager.add_storage("attachment", container)
