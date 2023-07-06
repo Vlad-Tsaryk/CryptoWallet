@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str
 
     QUICK_NODE_URL: str
+    QUICK_NODE_PRIVATE_KEY: str
 
     class Config:
         env_file = ".env"

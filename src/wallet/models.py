@@ -23,6 +23,7 @@ class Wallet(Base):
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     address: Mapped[str] = mapped_column(String(42))
+    private_key: Mapped[str] = mapped_column(String(64))
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     currency_id: Mapped[int] = mapped_column(ForeignKey("currency.id"))
 
@@ -68,7 +69,7 @@ class Transaction(Base):
     __tablename__ = "transaction"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    tnx_hash: Mapped[str] = mapped_column(String(64))
+    tnx_hash: Mapped[str] = mapped_column(String(66))
     from_address: Mapped[str] = mapped_column(String(42), index=True)
     to_address: Mapped[str] = mapped_column(String(42), index=True)
     value: Mapped[float] = mapped_column(Float)

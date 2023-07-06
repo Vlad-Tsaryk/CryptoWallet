@@ -6,15 +6,14 @@ from fastapi import Depends, APIRouter
 from loguru import logger
 from propan import RabbitBroker
 from sqlalchemy.ext.asyncio import AsyncSession
-from web3 import AsyncWeb3
 
-from config.config import settings
 from src.dependencies import get_broker, get_session
 from src.dependencies import get_current_user
 from src.users.models import User
 from src.wallet import service as wallet_service
 from src.wallet.dependencies import is_user_wallet
 from src.wallet.http.balance import get_multiple_addresses_balance
+from src.wallet.models import Wallet
 from src.wallet.schemas.transaction_schemas import TransactionCreate
 from src.wallet.schemas.wallet_schemas import (
     WalletCreate,
@@ -22,15 +21,15 @@ from src.wallet.schemas.wallet_schemas import (
     WalletPrivateKey,
     WalletResponse,
 )
-from src.wallet.service import get_all_user_wallets
+from src.wallet.service import (
+    get_all_user_wallets,
+    transaction_send,
+    get_wallet,
+    get_wallet_transactions,
+)
+from src.wallet.tasks import create_task
 
 wallet_router = APIRouter()
-
-
-# @wallet_router.get("/test")
-# async def hello_http(broker: Annotated[RabbitBroker, Depends(get_broker)]):
-#     await broker.publish("Hello, Rabbit!", "test")
-#     return "Hello, HTTP!"
 
 
 @wallet_router.post("/create-wallet/", response_model=WalletAddress)
@@ -39,10 +38,13 @@ async def create_wallet(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
-    private_key = "0x" + secrets.token_hex(32)
+    private_key = secrets.token_hex(32)
     acct = Account.from_key(private_key)
     address = acct.address
-    new_wallet = WalletCreate(address=address, user_id=current_user.id)
+    logger.info(len(private_key))
+    new_wallet = WalletCreate(
+        address=address, user_id=current_user.id, private_key=private_key
+    )
     await wallet_service.create_wallet(new_wallet, session)
     await broker.publish(address, "test")
     return new_wallet
@@ -57,7 +59,9 @@ async def import_wallet(
 ):
     acct = Account.from_key(data.private_key)
     address = acct.address
-    new_wallet = WalletCreate(address=address, user_id=current_user.id)
+    new_wallet = WalletCreate(
+        address=address, user_id=current_user.id, private_key=data.private_key
+    )
     await wallet_service.create_wallet(new_wallet, session)
     await broker.publish(address, "test")
     return new_wallet
@@ -82,20 +86,38 @@ async def wallet_list(
 
 @wallet_router.post("/send-transaction/")
 async def send_transaction(
-    transaction: TransactionCreate, current_user: User = Depends(is_user_wallet)
+    transaction: TransactionCreate,
+    wallet: Wallet = Depends(is_user_wallet),
+    session: AsyncSession = Depends(get_session),
 ):
-    w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(settings.QUICK_NODE_URL))
-    await w3.eth.send_transaction(
-        {
-            "from": transaction.from_address,
-            "to": transaction.to_address,
-            "value": transaction.value,
-        }
+    new_transaction = await transaction_send(
+        wallet=wallet, transaction=transaction, session=session
     )
-    logger.info(current_user)
+    return new_transaction
+
+
+@wallet_router.post("/get-free-eth/")
+async def get_free_eth(
+    wallet: Wallet = Depends(is_user_wallet),
+    session: AsyncSession = Depends(get_session),
+):
+    transaction = TransactionCreate(
+        from_wallet_id=1, to_address=wallet.address, value=0.00015
+    )
+    from_wallet = await get_wallet(wallet_id=1, session=session)
+    await transaction_send(wallet=from_wallet, transaction=transaction, session=session)
     return True
 
 
-# @wallet_router.event("wallet")
-# async def test(m):
-#     print(m)
+@wallet_router.get("/get-wallet-transactions/")
+async def watch_transactions(
+    wallet: Wallet = Depends(is_user_wallet),
+    session: AsyncSession = Depends(get_session),
+):
+    return await get_wallet_transactions(wallet, session)
+
+
+@wallet_router.get("/test/")
+async def aa(name: str):
+    create_task.delay(name)
+    return True
