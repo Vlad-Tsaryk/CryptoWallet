@@ -26,7 +26,6 @@ async def get_current_user(
 ):
     token_data = get_token_data(credentials.credentials)
     user = await session.get(User, token_data.user_id)
-    # logger.info(user.wallets)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     if not user.is_active:

@@ -106,3 +106,8 @@ async def get_wallet_transactions(wallet: Wallet, session: AsyncSession):
     )
     result = await session.scalars(smtp)
     return result.all()
+
+
+async def get_all_wallets_address(session: AsyncSession):
+    result = await session.scalars(select(Wallet.address))
+    return result.all()

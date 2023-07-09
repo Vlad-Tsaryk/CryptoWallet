@@ -27,7 +27,7 @@ from src.wallet.service import (
     get_wallet,
     get_wallet_transactions,
 )
-from src.wallet.tasks import create_task
+from src.wallet.tasks import parse_eth_blocks
 
 wallet_router = APIRouter()
 
@@ -118,6 +118,7 @@ async def watch_transactions(
 
 
 @wallet_router.get("/test/")
-async def aa(name: str):
-    create_task.delay(name)
+async def aa(name: str, session: AsyncSession = Depends(get_session)):
+    # logger.info(await get_all_wallets_address())
+    parse_eth_blocks.delay(True)
     return True
