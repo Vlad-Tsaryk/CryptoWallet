@@ -5,10 +5,9 @@ from loguru import logger
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from web3 import Web3
 from web3.middleware import construct_sign_and_send_raw_middleware
 
-from config.config import settings
+from config.web3 import get_web3
 from src.wallet.models import Wallet, Transaction
 from src.wallet.schemas.transaction_schemas import TransactionCreate
 from src.wallet.schemas.wallet_schemas import WalletCreate, WalletAddress
@@ -82,7 +81,7 @@ async def create_transaction(
 async def transaction_send(
     wallet: Wallet, transaction: TransactionCreate, session: AsyncSession
 ) -> Transaction:
-    w3 = Web3(Web3.HTTPProvider(settings.QUICK_NODE_URL))
+    w3 = get_web3()
     w3.middleware_onion.add(construct_sign_and_send_raw_middleware(wallet.private_key))
     tx_hash = w3.eth.send_transaction(
         {
