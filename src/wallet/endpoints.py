@@ -102,7 +102,7 @@ async def get_free_eth(
     session: AsyncSession = Depends(get_session),
 ):
     transaction = TransactionCreate(
-        from_wallet_id=1, to_address=wallet.address, value=0.00015
+        from_wallet_id=1, to_address=wallet.address, value=0.000015
     )
     from_wallet = await get_wallet(wallet_id=1, session=session)
     await transaction_send(wallet=from_wallet, transaction=transaction, session=session)
@@ -118,7 +118,7 @@ async def watch_transactions(
 
 
 @wallet_router.get("/test/")
-async def aa(name: str, session: AsyncSession = Depends(get_session)):
-    # logger.info(await get_all_wallets_address())
+async def aa(session: AsyncSession = Depends(get_session)):
+    # logger.info(await get_all_wallets_address(session))
     parse_eth_blocks.delay(True)
     return True

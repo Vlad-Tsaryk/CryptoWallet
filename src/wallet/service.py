@@ -9,7 +9,10 @@ from web3.middleware import construct_sign_and_send_raw_middleware
 
 from config.web3 import get_web3
 from src.wallet.models import Wallet, Transaction
-from src.wallet.schemas.transaction_schemas import TransactionCreate
+from src.wallet.schemas.transaction_schemas import (
+    TransactionCreate,
+    TransactionCreateOrUpdate,
+)
 from src.wallet.schemas.wallet_schemas import WalletCreate, WalletAddress
 
 
@@ -108,5 +111,34 @@ async def get_wallet_transactions(wallet: Wallet, session: AsyncSession):
 
 
 async def get_all_wallets_address(session: AsyncSession):
-    result = await session.scalars(select(Wallet.address))
+    smtp = select(Wallet.address)
+    result = await session.scalars(smtp)
     return result.all()
+
+
+async def multiple_update_or_create_transaction(
+    transaction_list: [TransactionCreateOrUpdate], session: AsyncSession
+):
+    for transaction in transaction_list:
+        logger.info(transaction)
+        result = await session.execute(
+            select(Transaction).where(Transaction.tnx_hash == transaction.tnx_hash)
+        )
+        db_trans = result.scalar_one_or_none()
+        if db_trans:
+            transaction_data = transaction.dict(exclude_unset=True)
+            for key, value in transaction_data.items():
+                setattr(db_trans, key, value)
+        else:
+            session.add(
+                Transaction(
+                    tnx_hash=transaction.tnx_hash,
+                    from_address=transaction.from_address,
+                    to_address=transaction.to_address,
+                    value=transaction.value,
+                    age=transaction.age,
+                    tnx_fee=transaction.tnx_fee,
+                    status=transaction.status,
+                )
+            )
+    await session.commit()
