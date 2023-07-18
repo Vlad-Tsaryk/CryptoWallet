@@ -24,14 +24,12 @@ async def transactions_to_db(transaction_list: [TransactionCreateOrUpdate]) -> N
 
 
 @shared_task(bind=True)
-def parse_eth_blocks(self, reply):
-    if reply:
-        parse_eth_blocks.apply_async(countdown=12, kwargs={"reply": True})
+def parse_eth_blocks(self, block_hash):
     loop = asyncio.get_event_loop()
     addresses = loop.run_until_complete(get_addresses())
     logger.info(addresses)
     w3 = get_web3()
-    block = w3.eth.get_block("latest", True)
+    block = w3.eth.get_block(block_hash, True)
     logger.info(block.get("number"))
     transaction_list = []
     for transaction in block.get("transactions"):

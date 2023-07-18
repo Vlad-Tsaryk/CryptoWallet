@@ -29,6 +29,8 @@ celery = {extras = ["redis"], version = "^5.3.0"}
 web3 = "^6.5.0"
 async-lru = "^2.0.3"
 python-socketio = "^5.8.0"
+click = "^8.1.4"
+websockets = "^11.0.3"
 
 
 
