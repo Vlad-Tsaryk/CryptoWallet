@@ -1,5 +1,4 @@
-from fastapi import FastAPI, Request, status, Path
-from fastapi.encoders import jsonable_encoder
+from fastapi import FastAPI, Request, Path
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import (
     JSONResponse,
@@ -11,6 +10,7 @@ from libcloud.storage.drivers.local import LocalStorageDriver
 from libcloud.storage.types import (
     ObjectDoesNotExistError,
 )
+from pydantic import ValidationError
 from sqlalchemy_file.storage import StorageManager
 
 from config.config import settings
@@ -52,6 +52,17 @@ async def serve_files(storage: str = Path(...), file_id: str = Path(...)):
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    content = jsonable_encoder({"detail": exc.errors(), "body": exc.body})
-    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=content)
+async def validation_exception_handler(
+    request: Request, exc: ValidationError
+) -> JSONResponse:
+    errors = []
+    for each in exc.errors():
+        result = {
+            "code": "validation-error",
+            "type": each.get("type"),
+            "field": each.get("loc")[1],
+            "message": each.get("msg"),
+        }
+        errors.append(result)
+
+    return JSONResponse({"detail": errors}, status_code=422)
