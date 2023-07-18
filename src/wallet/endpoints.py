@@ -24,10 +24,9 @@ from src.wallet.schemas.wallet_schemas import (
 from src.wallet.service import (
     get_all_user_wallets,
     transaction_send,
-    get_wallet,
     get_wallet_transactions,
+    send_free_eth,
 )
-from src.wallet.tasks import parse_eth_blocks
 
 wallet_router = APIRouter()
 
@@ -101,11 +100,7 @@ async def get_free_eth(
     wallet: Wallet = Depends(is_user_wallet),
     session: AsyncSession = Depends(get_session),
 ):
-    transaction = TransactionCreate(
-        from_wallet_id=1, to_address=wallet.address, value=0.000015
-    )
-    from_wallet = await get_wallet(wallet_id=1, session=session)
-    await transaction_send(wallet=from_wallet, transaction=transaction, session=session)
+    await send_free_eth(wallet=wallet, session=session)
     return True
 
 
@@ -119,6 +114,4 @@ async def watch_transactions(
 
 @wallet_router.get("/test/")
 async def aa(session: AsyncSession = Depends(get_session)):
-    # logger.info(await get_all_wallets_address(session))
-    parse_eth_blocks.delay(True)
     return True

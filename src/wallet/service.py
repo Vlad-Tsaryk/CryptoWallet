@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from eth_account import Account
 from fastapi import HTTPException
 from loguru import logger
 from sqlalchemy import select, or_
@@ -7,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from web3.middleware import construct_sign_and_send_raw_middleware
 
+from config.config import get_random_wallet_faucet
 from config.web3 import get_web3
 from src.wallet.models import Wallet, Transaction
 from src.wallet.schemas.transaction_schemas import (
@@ -66,7 +68,10 @@ async def get_all_user_wallets(user_id: int, session: AsyncSession):
 
 
 async def create_transaction(
-    tx_hex: str, wallet: Wallet, transaction: TransactionCreate, session: AsyncSession
+    tx_hex: str,
+    wallet: Wallet | Account,
+    transaction: TransactionCreate,
+    session: AsyncSession,
 ) -> Transaction:
     new_transaction = Transaction(
         tnx_hash=tx_hex,
@@ -82,10 +87,14 @@ async def create_transaction(
 
 
 async def transaction_send(
-    wallet: Wallet, transaction: TransactionCreate, session: AsyncSession
+    wallet: Wallet | Account, transaction: TransactionCreate, session: AsyncSession
 ) -> Transaction:
     w3 = get_web3()
-    w3.middleware_onion.add(construct_sign_and_send_raw_middleware(wallet.private_key))
+    if isinstance(wallet, Wallet):
+        private_key = wallet.private_key
+    else:
+        private_key = wallet.key
+    w3.middleware_onion.add(construct_sign_and_send_raw_middleware(private_key))
     tx_hash = w3.eth.send_transaction(
         {
             "from": wallet.address,
@@ -97,6 +106,12 @@ async def transaction_send(
     logger.info(tx_hex)
     new_transaction = await create_transaction(tx_hex, wallet, transaction, session)
     return new_transaction
+
+
+async def send_free_eth(wallet: Wallet, session: AsyncSession):
+    acct = Account.from_key(get_random_wallet_faucet())
+    transaction = TransactionCreate(to_address=wallet.address, value=0.000015)
+    await transaction_send(acct, transaction, session)
 
 
 async def get_wallet_transactions(wallet: Wallet, session: AsyncSession):

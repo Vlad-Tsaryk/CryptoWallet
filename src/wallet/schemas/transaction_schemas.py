@@ -20,7 +20,7 @@ class TransactionBase(BaseModel):
 
 
 class TransactionCreate(BaseModel):
-    from_wallet_id: int
+    # from_wallet_id: int
     to_address: str = Field(max_length=42)
     value: float = Field(ge=0)
 

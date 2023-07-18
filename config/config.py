@@ -1,4 +1,6 @@
 import os
+import random
+from functools import lru_cache
 from typing import Any, Dict, Optional
 
 from fastapi_mail import ConnectionConfig
@@ -55,6 +57,8 @@ class Settings(BaseSettings):
 
     QUICK_NODE_URL: str
     QUICK_NODE_PRIVATE_KEY: str
+    WALLET_PK_LIST: str
+    INFRA_WSS_URL: str
 
     class Config:
         env_file = ".env"
@@ -73,6 +77,16 @@ email_conf = ConnectionConfig(
     USE_CREDENTIALS=True,
     VALIDATE_CERTS=True,
 )
+
+
+@lru_cache
+def get_faucet_wallet_list() -> [str]:
+    return settings.WALLET_PK_LIST.split(",")
+
+
+def get_random_wallet_faucet() -> str:
+    return random.choice(get_faucet_wallet_list())
+
 
 # Configure Storage
 # os.makedirs("/media/attachment", 0o777, exist_ok=True)
