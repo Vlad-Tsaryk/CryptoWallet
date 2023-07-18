@@ -21,6 +21,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 from src.wallet import models  # noqa
 from src.users import models  # noqa
+from src.ibay import models  # noqa
 from config.database import Base
 
 target_metadata = Base.metadata
