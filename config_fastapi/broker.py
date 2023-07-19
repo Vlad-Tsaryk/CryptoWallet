@@ -12,3 +12,9 @@ broker: RabbitBroker = router.broker
 async def process_block(block_hash):
     parse_eth_blocks.delay(block_hash)
     logger.info(block_hash)
+
+
+# @broker.handle("ibay_serv", "exchange")
+# async def ibay_serv(block_hash):
+#     parse_eth_blocks.delay(block_hash)
+#     logger.info(block_hash)

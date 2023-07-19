@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 
 from eth_account import Account
@@ -95,13 +96,17 @@ async def transaction_send(
     else:
         private_key = wallet.key
     w3.middleware_onion.add(construct_sign_and_send_raw_middleware(private_key))
-    tx_hash = w3.eth.send_transaction(
+    loop = asyncio.get_running_loop()
+    tx_hash = await loop.run_in_executor(
+        None,
+        w3.eth.send_transaction,
         {
             "from": wallet.address,
             "value": w3.to_wei(transaction.value, "ether"),
             "to": transaction.to_address,
-        }
+        },
     )
+
     tx_hex = w3.to_hex(tx_hash)
     logger.info(tx_hex)
     new_transaction = await create_transaction(tx_hex, wallet, transaction, session)

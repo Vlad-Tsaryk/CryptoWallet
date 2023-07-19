@@ -45,6 +45,9 @@ class Wallet(Base):
 
     owner = relationship(User, back_populates="wallets")
     currency: Mapped["Currency"] = relationship(Currency, back_populates="wallets")
+    products: Mapped[List["Product"]] = relationship(
+        back_populates="wallet", cascade="all, delete-orphan"
+    )
     # currency = relationship("Currency")
     # shipping_address = relationship("Address")
 
