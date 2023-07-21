@@ -5,15 +5,17 @@ import websockets
 from loguru import logger
 from propan import RabbitBroker, PropanApp
 
-from config.config import settings
+from .config import settings
 
-broker: RabbitBroker = RabbitBroker("amqp://guest:guest@localhost:5672")
+broker: RabbitBroker = RabbitBroker(settings.RABBITMQ_URL)
+
 app = PropanApp(broker)
 
 
 @app.after_startup
 async def parser():
-    ws_url = settings.INFRA_WSS_URL
+    ws_url = settings.INFRA_URL
+    is_startup = True
     async with websockets.connect(ws_url) as websocket:
         await websocket.send(
             '{"jsonrpc": "2.0", "id": 1, "method": "eth_subscribe", "params": ["newHeads"]}',
@@ -22,17 +24,18 @@ async def parser():
         logger.success(f"Parser start successfully {subscription_response}")
         while True:
             try:
-                message = await asyncio.wait_for(websocket.recv(), timeout=2)
+                message = await asyncio.wait_for(websocket.recv(), timeout=5)
                 response = json.loads(message)
                 block_hash = response["params"]["result"]["hash"]
                 logger.info(f"Block hash: {block_hash}")
+                if is_startup:
+                    is_startup = False
+                    await broker.publish(
+                        queue="to_last_block", exchange="exchange", message=block_hash
+                    )
                 a = await broker.publish(
                     queue="block_parser", exchange="exchange", message=block_hash
                 )
                 logger.info(a)
-            except:
+            except Exception as e:
                 pass
-
-
-if __name__ == "__main__":
-    asyncio.run(app.run())

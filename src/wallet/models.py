@@ -8,12 +8,14 @@ from sqlalchemy import (
     SmallInteger,
     DateTime,
     Float,
+    Integer,
 )
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy_file import ImageField
 
 from config.database import Base
+from src.ibay.models import Product
 from src.users.models import User
 
 
@@ -81,3 +83,10 @@ class Transaction(Base):
     age: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
     tnx_fee: Mapped[float] = mapped_column(Float)
     status: Mapped[str] = mapped_column(String(10), STATUS_CHOICES, default="PENDING")
+
+
+class ParsedBlock(Base):
+    __tablename__ = "parsed_block"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    number: Mapped[int] = mapped_column(Integer)

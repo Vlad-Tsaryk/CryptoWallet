@@ -8,5 +8,5 @@ migrate:
 celery_start:
 	celery -A config_celery.celery worker --loglevel=info
 
-start_block_pars:
-	python3 blockchain_ws_service/parser.py
+blockchain_parser_start:
+	propan run blockchain_ws_service.parser:app

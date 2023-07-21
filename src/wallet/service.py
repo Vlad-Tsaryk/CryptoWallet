@@ -11,7 +11,7 @@ from web3.middleware import construct_sign_and_send_raw_middleware
 
 from config.config import get_random_wallet_faucet
 from config.web3 import get_web3
-from src.wallet.models import Wallet, Transaction
+from src.wallet.models import Wallet, Transaction, ParsedBlock
 from src.wallet.schemas.transaction_schemas import (
     TransactionCreate,
     TransactionCreateOrUpdate,
@@ -97,15 +97,23 @@ async def transaction_send(
         private_key = wallet.key
     w3.middleware_onion.add(construct_sign_and_send_raw_middleware(private_key))
     loop = asyncio.get_running_loop()
-    tx_hash = await loop.run_in_executor(
-        None,
-        w3.eth.send_transaction,
-        {
-            "from": wallet.address,
-            "value": w3.to_wei(transaction.value, "ether"),
-            "to": transaction.to_address,
-        },
-    )
+    try:
+        tx_hash = await loop.run_in_executor(
+            None,
+            w3.eth.send_transaction,
+            {
+                "from": wallet.address,
+                "value": w3.to_wei(transaction.value, "ether"),
+                "to": transaction.to_address,
+            },
+        )
+    except ValueError as error:
+        message = error.args[0]
+        if message["code"] == -32000:
+            raise HTTPException(
+                status_code=400, detail="Not enough money in your wallet"
+            )
+        raise HTTPException(status_code=400, detail=message["message"])
 
     tx_hex = w3.to_hex(tx_hash)
     logger.info(tx_hex)
@@ -162,3 +170,9 @@ async def multiple_update_or_create_transaction(
                 )
             )
     await session.commit()
+
+
+async def get_last_parsed_block(session: AsyncSession) -> ParsedBlock:
+    smtp = select(ParsedBlock).order_by(ParsedBlock.number.desc())
+    result = await session.scalar(smtp)
+    return result
