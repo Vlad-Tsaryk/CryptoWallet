@@ -3,17 +3,12 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from propan import RabbitBroker
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config.database import async_session
+from config.database import get_session
 from config_fastapi.broker import broker
 from src.auth.dependencies import get_token_data
 from src.users.models import User
 
 security = HTTPBearer()
-
-
-async def get_session() -> AsyncSession:
-    async with async_session() as session:  # noqa
-        yield session
 
 
 def get_broker() -> RabbitBroker:

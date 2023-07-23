@@ -1,7 +1,8 @@
 from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.dependencies import get_session, get_current_user
+from config.database import get_session
+from src.dependencies import get_current_user
 from src.users.models import User
 from src.wallet.models import Wallet
 from src.wallet.service import get_wallet

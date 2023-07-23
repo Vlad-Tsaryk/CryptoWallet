@@ -1,13 +1,12 @@
 import secrets
-from typing import Annotated, List
+from typing import List
 
 from eth_account import Account
 from fastapi import Depends, APIRouter
 from loguru import logger
-from propan import RabbitBroker
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.dependencies import get_broker, get_session
+from config.database import get_session
 from src.dependencies import get_current_user
 from src.users.models import User
 from src.wallet import service as wallet_service
@@ -33,7 +32,6 @@ wallet_router = APIRouter()
 
 @wallet_router.post("/create-wallet/", response_model=WalletAddress)
 async def create_wallet(
-    broker: Annotated[RabbitBroker, Depends(get_broker)],
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
@@ -45,14 +43,12 @@ async def create_wallet(
         address=address, user_id=current_user.id, private_key=private_key
     )
     await wallet_service.create_wallet(new_wallet, session)
-    await broker.publish(address, "test")
     return new_wallet
 
 
 @wallet_router.post("/import-wallet/", response_model=WalletAddress)
 async def import_wallet(
     data: WalletPrivateKey,
-    broker: Annotated[RabbitBroker, Depends(get_broker)],
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
@@ -62,7 +58,6 @@ async def import_wallet(
         address=address, user_id=current_user.id, private_key=data.private_key
     )
     await wallet_service.create_wallet(new_wallet, session)
-    await broker.publish(address, "test")
     return new_wallet
 
 
@@ -112,6 +107,6 @@ async def watch_transactions(
     return await get_wallet_transactions(wallet, session)
 
 
-@wallet_router.get("/test/")
-async def aa(session: AsyncSession = Depends(get_session)):
-    return True
+# @wallet_router.get("/test/")
+# async def aa(broker=Depends(get_broker)):
+#     await broker.publish(queue='ibay_queue', exchange='exchange', message=10)

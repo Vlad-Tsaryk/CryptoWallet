@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, Form, UploadFile, HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from config.database import get_session
 from src.dependencies import get_current_user
-from src.dependencies import get_session
 from src.users import service as user_service
 from src.users.models import User
 from src.users.schemas import UserResponse, UserUpdate
@@ -43,13 +43,3 @@ async def profile_update(
         raise HTTPException(status_code=400, detail=e.errors())
 
     return await user_service.update_user(user, current_user, session)
-
-
-# @profile_router.get("/profile/create-wallet/")
-# async def create_wallet(
-#     broker: Annotated[RabbitBroker, Depends(get_broker)],
-#     current_user: User = Depends(get_current_user),
-# ):
-#     await broker.publish(current_user, "wallet.create")
-#     logger.success(f"Address: {address}")
-#     return address

@@ -1,6 +1,7 @@
 from fastapi import Form, UploadFile, File, Depends, HTTPException
 
-from src.dependencies import get_session, get_current_user
+from config.database import get_session
+from src.dependencies import get_current_user
 from src.ibay.schemas.product_schemas import ProductCreate
 from src.users.models import User
 from src.wallet.dependencies import is_user_wallet

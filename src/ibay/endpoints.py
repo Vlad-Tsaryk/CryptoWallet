@@ -3,7 +3,8 @@ from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.dependencies import get_session, get_current_user
+from config.database import get_session
+from src.dependencies import get_current_user
 from src.ibay.dependencies import product_form
 from src.ibay.schemas.product_schemas import ProductCreate, ProductResponse
 from src.ibay.service import product_create, order_create, product_list, order_list
