@@ -23,11 +23,14 @@ class WalletPrivateKey(BaseModel):
 class WalletResponse(WalletBase):
     id: int
     currency: CurrencyResponse
-    balance: int
 
-    @property
-    def balance(self):
-        return 4
+    class Config:
+        orm_mode = True
+
+
+class WalletRelationResponse(BaseModel):
+    id: int
+    address: str
 
     class Config:
         orm_mode = True

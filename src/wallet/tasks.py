@@ -6,6 +6,7 @@ from loguru import logger
 
 from config.database import async_session
 from config.web3 import get_web3
+from src.ibay.service import multiple_order_update
 from src.wallet.models import ParsedBlock
 from src.wallet.schemas.transaction_schemas import StatusEnum, TransactionCreateOrUpdate
 from src.wallet.service import (
@@ -15,15 +16,18 @@ from src.wallet.service import (
 )
 
 
+async def db_query_func(func, *args, **kwargs):
+    async with async_session() as session:
+        return await func(session=session, *args, **kwargs)
+
+
 async def get_addresses() -> list:
-    async with async_session() as session:
-        addresses = await get_all_wallets_address(session)
-    return addresses
+    return await db_query_func(get_all_wallets_address)
 
 
-async def transactions_to_db(transaction_list: [TransactionCreateOrUpdate]) -> None:
-    async with async_session() as session:
-        await multiple_update_or_create_transaction(transaction_list, session)
+async def db_last_parsed_block() -> int:
+    block = await db_query_func(get_last_parsed_block)
+    return block.number
 
 
 async def parsed_block_to_db(number: int):
@@ -33,38 +37,38 @@ async def parsed_block_to_db(number: int):
     return True
 
 
-async def db_last_parsed_block() -> int:
-    async with async_session() as session:
-        block = await get_last_parsed_block(session)
-    return block.number
-
-
 def process_block_transactions(
     w3, block
 ) -> List[TransactionCreateOrUpdate] | List[None]:
     loop = asyncio.get_event_loop()
     addresses = loop.run_until_complete(get_addresses())
     transaction_list = []
+    transaction_hash_list = []
     for transaction in block.get("transactions"):
         if transaction.get("to") in addresses or transaction.get("from") in addresses:
             tnx_hash = transaction.get("hash").hex()
+            transaction_hash_list.append(tnx_hash)
             trans_receipt = w3.eth.get_transaction_receipt(tnx_hash)
-            transaction_list.append(
-                TransactionCreateOrUpdate(
-                    tnx_hash=tnx_hash,
-                    from_address=trans_receipt.get("from"),
-                    to_address=trans_receipt.get("to"),
-                    value=w3.from_wei(transaction.get("value"), "ether"),
-                    tnx_fee=w3.from_wei(
-                        trans_receipt.get("gasUsed")
-                        * trans_receipt.get("effectiveGasPrice"),
-                        "ether",
-                    ),
-                    status=StatusEnum.success
-                    if trans_receipt.get("status")
-                    else StatusEnum.failed,
-                )
+            transaction_create_or_update = TransactionCreateOrUpdate(
+                tnx_hash=tnx_hash,
+                from_address=trans_receipt.get("from"),
+                to_address=trans_receipt.get("to"),
+                value=w3.from_wei(transaction.get("value"), "ether"),
+                tnx_fee=w3.from_wei(
+                    trans_receipt.get("gasUsed")
+                    * trans_receipt.get("effectiveGasPrice"),
+                    "ether",
+                ),
+                status=StatusEnum.success
+                if trans_receipt.get("status")
+                else StatusEnum.failed,
             )
+
+            transaction_list.append(transaction_create_or_update)
+    if transaction_hash_list:
+        loop.run_until_complete(
+            db_query_func(multiple_order_update, transaction_hash_list)
+        )
     return transaction_list
 
 
@@ -73,7 +77,6 @@ def parse_to_last_block(self, block_hash):
     loop = asyncio.get_event_loop()
     w3 = get_web3()
     current_block_number = loop.run_until_complete(db_last_parsed_block())
-
     latest_block = w3.eth.get_block(block_hash)
     latest_block_number = latest_block.get("number")
     logger.success(
@@ -86,7 +89,9 @@ def parse_to_last_block(self, block_hash):
         logger.success(f"Parse block {current_block_number}")
         transaction_list = process_block_transactions(w3, current_block)
         if transaction_list:
-            loop.run_until_complete(transactions_to_db(transaction_list))
+            loop.run_until_complete(
+                db_query_func(multiple_update_or_create_transaction, transaction_list)
+            )
     return True
 
 
@@ -99,6 +104,8 @@ def parse_eth_blocks(self, block_hash):
     loop.run_until_complete(parsed_block_to_db(block_number))
     transaction_list = process_block_transactions(w3, block)
     if transaction_list:
-        loop.run_until_complete(transactions_to_db(transaction_list))
+        loop.run_until_complete(
+            db_query_func(multiple_update_or_create_transaction, transaction_list)
+        )
     logger.info(f"Block **{block_number}** parsed successfully")
     return True

@@ -2,7 +2,7 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    INFRA_URL: str
+    INFRA_WSS_URL: str
     RABBITMQ_URL: str
 
     class Config:

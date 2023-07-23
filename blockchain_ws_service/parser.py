@@ -5,7 +5,7 @@ import websockets
 from loguru import logger
 from propan import RabbitBroker, PropanApp
 
-from .config import settings
+from conf import settings
 
 broker: RabbitBroker = RabbitBroker(settings.RABBITMQ_URL)
 
@@ -14,7 +14,7 @@ app = PropanApp(broker)
 
 @app.after_startup
 async def parser():
-    ws_url = settings.INFRA_URL
+    ws_url = settings.INFRA_WSS_URL
     is_startup = True
     async with websockets.connect(ws_url) as websocket:
         await websocket.send(

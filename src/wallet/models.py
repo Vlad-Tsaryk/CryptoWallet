@@ -15,7 +15,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy_file import ImageField
 
 from config.database import Base
-from src.ibay.models import Product
 from src.users.models import User
 
 
@@ -47,9 +46,9 @@ class Wallet(Base):
 
     owner = relationship(User, back_populates="wallets")
     currency: Mapped["Currency"] = relationship(Currency, back_populates="wallets")
-    products: Mapped[List["Product"]] = relationship(
-        back_populates="wallet", cascade="all, delete-orphan"
-    )
+    # products: Mapped[List["Product"]] = relationship(
+    #     back_populates="wallet", cascade="all, delete-orphan"
+    # )
     # currency = relationship("Currency")
     # shipping_address = relationship("Address")
 
