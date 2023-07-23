@@ -57,8 +57,10 @@ class Settings(BaseSettings):
 
     QUICK_NODE_URL: str
     QUICK_NODE_PRIVATE_KEY: str
+
     WALLET_PK_LIST: str
-    INFRA_WSS_URL: str
+    APP_WALLET_PK: str
+    APP_WALLET_ADDRESS: str
 
     class Config:
         env_file = ".env"
