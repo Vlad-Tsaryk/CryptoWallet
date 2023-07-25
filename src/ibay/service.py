@@ -1,6 +1,7 @@
 from typing import Any, List
 
 from loguru import logger
+from propan.annotations import RabbitBroker
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -59,14 +60,12 @@ async def order_list(user: User, session: AsyncSession):
 
 
 async def multiple_order_update(
-    transaction_hash_list: List[str], session: AsyncSession
+    transaction_hash_list: List[str], broker: RabbitBroker, session: AsyncSession
 ):
-    # from config_fastapi.broker import broker
     logger.info(transaction_hash_list)
     result = await session.scalars(
         select(Order).where(Order.tnx_hash.in_(transaction_hash_list))
     )
-    # broker = broker
     db_orders = result.all()
-    # for order in db_orders:
-    #     await broker.publish(queue='ibay_queue', exchange='exchange', message=order.id)
+    for order in db_orders:
+        await broker.publish(queue="ibay_queue", exchange="exchange", message=order.id)

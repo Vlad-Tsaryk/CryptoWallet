@@ -3,7 +3,9 @@ from typing import List
 
 from celery import shared_task
 from loguru import logger
+from propan import RabbitBroker
 
+from config.config import settings
 from config.database import async_session
 from config.web3 import get_web3
 from src.ibay.service import multiple_order_update
@@ -37,6 +39,17 @@ async def parsed_block_to_db(number: int):
     return True
 
 
+async def publish_message(*args, **kwargs):
+    async with RabbitBroker(settings.RABBITMQ_URL) as broker:
+        await broker.publish(*args, **kwargs)
+
+
+async def add_broker_to_func(func, *args, **kwargs):
+    async with RabbitBroker(settings.RABBITMQ_URL) as broker:
+        await db_query_func(func, *args, **kwargs, broker=broker)
+        # await broker.publish(*args, **kwargs)
+
+
 def process_block_transactions(
     w3, block
 ) -> List[TransactionCreateOrUpdate] | List[None]:
@@ -67,23 +80,43 @@ def process_block_transactions(
             transaction_list.append(transaction_create_or_update)
     if transaction_hash_list:
         loop.run_until_complete(
-            db_query_func(multiple_order_update, transaction_hash_list)
+            add_broker_to_func(multiple_order_update, transaction_hash_list)
         )
     return transaction_list
 
 
 @shared_task(bind=True)
-def parse_to_last_block(self, block_hash):
+def test_task(self):
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(
+        publish_message(queue="ibay_queue", exchange="exchange", message=1)
+    )
+    logger.info("hi")
+    return True
+
+
+@shared_task(bind=True)
+def parse_to_last_block(
+    self, block_hash, current_block_number=None, latest_block_number=None
+):
     loop = asyncio.get_event_loop()
     w3 = get_web3()
-    current_block_number = loop.run_until_complete(db_last_parsed_block())
-    latest_block = w3.eth.get_block(block_hash)
-    latest_block_number = latest_block.get("number")
-    logger.success(
-        f"Start parse from **{current_block_number}** to last block **{latest_block_number}**"
-    )
-    while latest_block_number != current_block_number:
-        current_block = w3.eth.get_block(current_block_number + 1, True)
+    if not current_block_number:
+        current_block_number = loop.run_until_complete(db_last_parsed_block())
+    if not latest_block_number:
+        latest_block = w3.eth.get_block(block_hash)
+        latest_block_number = latest_block.get("number")
+        logger.success(
+            f"Start parse from **{current_block_number}** to last block **{latest_block_number}**"
+        )
+    if latest_block_number != current_block_number:
+        current_block_number += 1
+        parse_to_last_block.delay(block_hash, current_block_number, latest_block_number)
+        try:
+            current_block = w3.eth.get_block(current_block_number, True)
+        except Exception as e:
+            loop.run_until_complete(asyncio.sleep(1))
+            current_block = w3.eth.get_block(current_block_number, True)
         current_block_number = current_block.get("number")
         loop.run_until_complete(parsed_block_to_db(current_block_number))
         logger.success(f"Parse block {current_block_number}")

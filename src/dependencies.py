@@ -1,18 +1,12 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from propan import RabbitBroker
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database import get_session
-from config_fastapi.broker import broker
 from src.auth.dependencies import get_token_data
 from src.users.models import User
 
 security = HTTPBearer()
-
-
-def get_broker() -> RabbitBroker:
-    return broker
 
 
 async def get_current_user(

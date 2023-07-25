@@ -105,8 +105,3 @@ async def watch_transactions(
     session: AsyncSession = Depends(get_session),
 ):
     return await get_wallet_transactions(wallet, session)
-
-
-# @wallet_router.get("/test/")
-# async def aa(broker=Depends(get_broker)):
-#     await broker.publish(queue='ibay_queue', exchange='exchange', message=10)
