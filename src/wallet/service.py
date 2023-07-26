@@ -68,6 +68,12 @@ async def get_all_user_wallets(user_id: int, session: AsyncSession):
     return result.all()
 
 
+async def get_transaction_by_hash(tnx_hash: str, session: AsyncSession) -> Transaction:
+    smtp = select(Transaction).where(Transaction.tnx_hash == tnx_hash)
+    result = await session.scalar(smtp)
+    return result
+
+
 async def create_transaction(
     tx_hex: str,
     wallet: Wallet | Account,
@@ -169,6 +175,11 @@ async def multiple_update_or_create_transaction(
                     status=transaction.status,
                 )
             )
+    await session.commit()
+
+
+async def return_transaction(transaction: Transaction, session: AsyncSession):
+    transaction.status = "FAILED"
     await session.commit()
 
 

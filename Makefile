@@ -14,4 +14,4 @@ blockchain_parser_start:
 #ibay_service_start:
 #	propan run ibay_service.app:app
 ibay_service_start:
-	uvicorn ibay_service.config.app:app --port 8001 --reload
+	uvicorn ibay_service.conf.app:app --port 8001 --reload

@@ -9,6 +9,7 @@ from config.config import settings
 from config.database import async_session
 from config.web3 import get_web3
 from src.ibay.service import multiple_order_update
+from src.utils import db_query_func
 from src.wallet.models import ParsedBlock
 from src.wallet.schemas.transaction_schemas import StatusEnum, TransactionCreateOrUpdate
 from src.wallet.service import (
@@ -16,11 +17,6 @@ from src.wallet.service import (
     multiple_update_or_create_transaction,
     get_last_parsed_block,
 )
-
-
-async def db_query_func(func, *args, **kwargs):
-    async with async_session() as session:
-        return await func(session=session, *args, **kwargs)
 
 
 async def get_addresses() -> list:
@@ -39,15 +35,9 @@ async def parsed_block_to_db(number: int):
     return True
 
 
-async def publish_message(*args, **kwargs):
-    async with RabbitBroker(settings.RABBITMQ_URL) as broker:
-        await broker.publish(*args, **kwargs)
-
-
 async def add_broker_to_func(func, *args, **kwargs):
     async with RabbitBroker(settings.RABBITMQ_URL) as broker:
         await db_query_func(func, *args, **kwargs, broker=broker)
-        # await broker.publish(*args, **kwargs)
 
 
 def process_block_transactions(
@@ -83,16 +73,6 @@ def process_block_transactions(
             add_broker_to_func(multiple_order_update, transaction_hash_list)
         )
     return transaction_list
-
-
-@shared_task(bind=True)
-def test_task(self):
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(
-        publish_message(queue="ibay_queue", exchange="exchange", message=1)
-    )
-    logger.info("hi")
-    return True
 
 
 @shared_task(bind=True)

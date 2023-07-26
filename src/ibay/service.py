@@ -1,5 +1,6 @@
 from typing import Any, List
 
+from eth_account import Account
 from loguru import logger
 from propan.annotations import RabbitBroker
 from sqlalchemy import select
@@ -12,7 +13,7 @@ from src.ibay.schemas.product_schemas import ProductCreate
 from src.users.models import User
 from src.wallet.models import Wallet
 from src.wallet.schemas.transaction_schemas import TransactionCreate
-from src.wallet.service import transaction_send
+from src.wallet.service import transaction_send, get_transaction_by_hash
 
 
 async def product_get_by_id(product_id: int, session: AsyncSession) -> Product | None:
@@ -68,4 +69,20 @@ async def multiple_order_update(
     )
     db_orders = result.all()
     for order in db_orders:
-        await broker.publish(queue="ibay_queue", exchange="exchange", message=order.id)
+        await broker.publish(
+            queue="ibay_delivery", exchange="exchange", message=order.id
+        )
+
+
+async def return_order_money(order_info: dict, session: AsyncSession):
+    order = await session.scalar(
+        select(Order).where(Order.id == order_info["order_id"])
+    )
+    transaction = await get_transaction_by_hash(order_info["tnx_hash"], session)
+    acct = Account.from_key(settings.APP_WALLET_PK)
+    transaction_create = TransactionCreate(
+        to_address=transaction.from_address, value=transaction.value / 2
+    )
+    new_transaction = await transaction_send(acct, transaction_create, session)
+    order.return_address = new_transaction.tnx_hash
+    await session.commit()

@@ -40,4 +40,5 @@ class Order(Base):
     status: Mapped[str] = mapped_column(
         String(10), ENUM(OrderStatusChoices), default=OrderStatusChoices.NEW.value
     )
-    return_address: Mapped[str] = mapped_column(String(42), nullable=True)
+    return_address: Mapped[str] = mapped_column(String(66), nullable=True)
+    product: Mapped["Product"] = relationship()
